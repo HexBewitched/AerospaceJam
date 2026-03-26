@@ -10,6 +10,8 @@
     <h1>Aerospace Jam Example</h1>
     <!-- Notice how the span that contains the placeholder value has an ID. We reference this ID later in the script, and it lets us pick this element in specific. -->
     <p><b>Random number chosen by the Pi: </b> <span id="randomNumber">Loading...</span></p>
+    <p><b>Barometric Pressure: </b> <span id="barometricPressure">Loading...</span> hPa</p>
+    <button id="barometricPressureButton">Request Barometric Pressure</button>
     <script>
         // This function wrapper (addEventListener) makes the inner contents run only when the DOM (Document Object Model) content is loaded.
         // In simpler terms, this runs once the page has finished loading.
@@ -25,6 +27,14 @@
                 // For new sensors, we can really easily repeat this! For instance, if you added a piece to the data on the server side called "mySensor", as in the other example, you could do:
                 // var mySensorSpan = document.getElementById('mySensor');
                 // mySensorSpan.textContent = msg.mySensor;
+                
+                var barometricPressureSpan = document.getElementById('barometricPressure');
+                barometricPressureSpan.textContent = msg.barometricPressure;
+            });
+            
+            var barometricPressureButton = document.getElementById('barometricPressureButton');
+            barometricPressureButton.addEventListener('click', function() {
+                socket.emit('requstBarometricPressure');
             });
         });
     </script>
