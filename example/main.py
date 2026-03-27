@@ -41,9 +41,12 @@ def background_thread(queue):
         barometricPressure = random.randint(10,1000) #bmp.get_pressure() #TODO: uncomment when I have the drone
         heightDictionary["" + elapsedTime] = pressureToHeight(barometricPressure)
         try:
-            barometricPressureRequest = queue.get(False) #false makes it not stop if the queue is empty
+            request = queue.get(False) #false makes it not stop if the queue is empty
+            match request[0]:
+                case barometric:
+                    barometricPressureRequest = request[1]
         except:
-            barometricPressureRequest = False
+            pass
         #this is where we add data to the dictionary if it has been requested
         if barometricPressureRequest == True:
             print('send barometric pressure')
@@ -69,7 +72,7 @@ def handle_connect():
 #setter functions for the requests from the app
 @socketio.on('requstBarometricPressure')
 def requestBarometricPressure():
-    queue.put(True) #have this change sync across threads
+    queue.put((Barometric, True)) #have this change sync across threads
 
 def airPressureToHeight(pressure):
     return 44330 * ( 1 - math.pow((pressure / PRESSURE_AT_SEA_LEVEL), 0.1903))
