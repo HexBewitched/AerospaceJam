@@ -2,6 +2,7 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from bmp180 import BMP180
+from queue import Queue
 # This module lets us pick random numbers, you can remove it later.
 import random
 
@@ -13,6 +14,7 @@ socketio = SocketIO(app)
 #bmp = BMP180() #TODO: uncomment when I have the drone
 
 #variables to handle button requests
+queue = Queue()
 barometricPressureRequest = False
 
 #the dictionary for the data to be sent to the app
@@ -24,7 +26,7 @@ def index():
     return render_template('index.html')
 
 # This function runs in the background to transmit data to connected clients.
-def background_thread():
+def background_thread(queue):
     barometricPressureRequest = False
     while True:
         # We sleep here for a single second, but this can be increased or decreased depending on how quickly you want data to be pushed to clients.
@@ -32,6 +34,10 @@ def background_thread():
         
         barometricPressure = random.randint(10,1000) #bmp.get_pressure() #TODO: uncomment when I have the drone
         
+        try:
+            barometricPressureRequest = queue.get(False) #false makes it not stop if the queue is empty
+        except:
+            barometricPressureRequest = False
         #this is where we add data to the dictionary if it has been requested
         if barometricPressureRequest == True:
             print('send barometric pressure')
@@ -52,12 +58,12 @@ def background_thread():
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
-    socketio.start_background_task(target=background_thread)
+    socketio.start_background_task(target=background_thread, queue=queue)
 
 #setter functions for the requests from the app
 @socketio.on('requstBarometricPressure')
 def requestBarometricPressure():
-    barometricPressureRequest = True #have this change sync across threads
+    queue.put(True) #have this change sync across threads
 
 # This function is called
 def main():
