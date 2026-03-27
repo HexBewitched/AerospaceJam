@@ -3,6 +3,7 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO
 from bmp180 import BMP180
 from queue import Queue
+from datetime import time
 # This module lets us pick random numbers, you can remove it later.
 import random
 
@@ -10,7 +11,7 @@ import random
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-#sensor objects are defined here
+#sensor and other objects are defined here
 #bmp = BMP180() #TODO: uncomment when I have the drone
 
 #variables to handle button requests
@@ -19,6 +20,11 @@ barometricPressureRequest = False
 
 #the dictionary for the data to be sent to the app
 dataDictionary = { }
+heightDictionary = { }
+
+#constants
+START_TIME = time.time()
+PRESSURE_AT_SEA_LEVEL = 1001.6 #TODO: check local airport report for this value day of
 
 # When someone requests the root page from our web server, we return 'index.html'.
 @app.route('/')
@@ -31,9 +37,9 @@ def background_thread(queue):
     while True:
         # We sleep here for a single second, but this can be increased or decreased depending on how quickly you want data to be pushed to clients.
         socketio.sleep(1)
-        
+        elapsedTime = time.time() - START_TIME
         barometricPressure = random.randint(10,1000) #bmp.get_pressure() #TODO: uncomment when I have the drone
-        
+        heightDictionary["" + elapsedTime] = pressureToHeight(barometricPressure)
         try:
             barometricPressureRequest = queue.get(False) #false makes it not stop if the queue is empty
         except:
@@ -41,7 +47,7 @@ def background_thread(queue):
         #this is where we add data to the dictionary if it has been requested
         if barometricPressureRequest == True:
             print('send barometric pressure')
-            dataDictionary['barometricPressure'] = barometricPressure
+            dataDictionary['barometricPressure'] = heightDictionary
             barometricPressureRequest = False
         dataDictionary['randomNumber'] = random.randint(1, 100)
 
@@ -64,6 +70,9 @@ def handle_connect():
 @socketio.on('requstBarometricPressure')
 def requestBarometricPressure():
     queue.put(True) #have this change sync across threads
+
+def airPressureToHeight(pressure):
+    return 44330 * ( 1 - math.pow((pressure / PRESSURE_AT_SEA_LEVEL), 0.1903))
 
 # This function is called
 def main():
