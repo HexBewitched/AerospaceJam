@@ -23,6 +23,7 @@ tfluna.set_samp_rate(5)
 #variables to handle button requests
 queue = Queue()
 barometricPressureRequest = False
+collectMapData = False
 
 #the dictionary for the data to be sent to the app
 dataDictionary = { }
@@ -62,13 +63,14 @@ def background_thread(queue):
         heightDictionary["" + deltaTime] = pressureToHeight(barometricPressure)
         
         dataDictionary["position"] = processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData45)
-        processLidarData(dataDictionary, deltaTime, lidarDistance, gyroData)
 
         try:
             request = queue.get(False) #false makes it not stop if the queue is empty
             match request[0]:
-                case barometric:
+                case "Barometric":
                     barometricPressureRequest = request[1]
+                case "Lidar":
+                    collectMapData = request[1]
         except:
             pass
         #this is where we add data to the dictionary if it has been requested
@@ -77,6 +79,9 @@ def background_thread(queue):
             dataDictionary['barometricPressure'] = heightDictionary
             barometricPressureRequest = False
         dataDictionary['randomNumber'] = random.randint(1, 100)
+
+        if collectMapData:
+            processLidarData(dataDictionary, deltaTime, lidarDistance, gyroData)
 
         # Then, we emit an event called "update_data" - but this can actually be whatever we want - with the data being a dictionary
         # where 'randomNumber' is set to a random number we choose here. You should replace the data being sent back with your sensor data
@@ -93,10 +98,15 @@ def handle_connect():
     print('Client connected')
     socketio.start_background_task(target=background_thread, queue=queue)
 
+@socketio.on('drawMap')
+def collectMapData():
+    collectMapData = not collectMapData
+    queue.put(("Lidar", collectMapData))
+
 #setter functions for the requests from the app
 @socketio.on('requstBarometricPressure')
 def requestBarometricPressure():
-    queue.put((Barometric, True)) #have this change sync across threads
+    queue.put(("Barometric", True)) #have this change sync across threads
 
 def airPressureToHeight(pressure):
     return 44330 * ( 1 - math.pow((pressure / PRESSURE_AT_SEA_LEVEL), 0.1903))

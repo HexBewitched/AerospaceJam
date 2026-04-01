@@ -21,6 +21,7 @@
     <canvas id="rotationGraph" style="width:100%;max-width:700px;"></canvas>
     <p><b>(x, y, z, yaw, pitch, roll): </b> <span id="position">Loading...</span></p>
     <p>2D map</p>
+    <button id="drawMap">Collect Map Data</button>
     <canvas id="map" style="width:100%;max-width:700px;"></canvas>
     <script>
         // This function wrapper (addEventListener) makes the inner contents run only when the DOM (Document Object Model) content is loaded.
@@ -28,6 +29,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Then, we connect to our webserver using two special variables - you don't need to worry about this either.
             var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            var mapIsActive = false;
             // Now, we subscribe to the server's "update_data" events - this is sent every second by the background thread, but you can change both the events' names and the speed of these events being sent.
             socket.on('update_data', function(msg) {
                 // Now, we get the span that we defined before by its ID...
@@ -39,7 +42,7 @@
                 // mySensorSpan.textContent = msg.mySensor;
                 
                 positionData = "(" + msg.position[0] + ", " + msg.position[1] + ", " + msg.position[2] + ", " + msg.position[3] + ", " + msg.position[4] + ", " + msg.position[5] + ")";
-                document.getElementById('position'). textContent = positionData;
+                document.getElementById('position').textContent = positionData;
 
                 new Chart("barometricPressure", {
                     type: "line",
@@ -114,6 +117,16 @@
             var barometricPressureButton = document.getElementById('barometricPressureButton');
             barometricPressureButton.addEventListener('click', function() {
                 socket.emit('requstBarometricPressure');
+            });
+
+            var mapButton = document.getElementById('drawMap');
+            mapButton.addEventListener('click', function() {
+                socket.emit('drawMap');
+                mapIsActive = !mapIsActive
+                if(mapIsActive)
+                    mapButton.textContent = "Stop Collecting Map Data"
+                else
+                    mapButton.textContent = "Collect Map Data"
             });
         });
     </script>
