@@ -15,6 +15,11 @@
     <p><b>Barometric Pressure: </b></p>
     <canvas id="barometricPressure" style="width:100%;max-width:700px;"></canvas>
     <button id="barometricPressureButton">Request Barometric Pressure</button>
+
+    <p>Position and rotation graph:</p>
+    <canvas id="positionGraph" style="width:100%;max-width:700px;"></canvas>
+    <canvas id="rotationGraph" style="width:100%;max-width:700px;"></canvas>
+    <p><b>(x, y, z, yaw, pitch, roll): </b> <span id="position">Loading...</span></p>
     <script>
         // This function wrapper (addEventListener) makes the inner contents run only when the DOM (Document Object Model) content is loaded.
         // In simpler terms, this runs once the page has finished loading.
@@ -31,6 +36,9 @@
                 // var mySensorSpan = document.getElementById('mySensor');
                 // mySensorSpan.textContent = msg.mySensor;
                 
+                positionData = "(" + msg.position[0] + ", " + msg.position[1] + ", " + msg.position[2] + ", " + msg.position[3] + ", " + msg.position[4] + ", " + msg.position[5] + ")";
+                document.getElementById('position'). textContent = positionData;
+
                 new Chart("barometricPressure", {
                     type: "line",
                     data: {
@@ -42,6 +50,52 @@
                         }]
                     }
                 });
+            });
+
+            new Chart("positionGraph", {
+                type: "line",
+                data: {
+                    labels: msg.accelerometer[0],
+                    datasets: [{
+                    data: msg.accelerometer[4],
+                    borderColor: "red",
+                    fill: false
+                    },{
+                    data: msg.accelerometer[5],
+                    borderColor: "green",
+                    fill: false
+                    },{
+                    data: msg.accelerometer[6],
+                    borderColor: "blue",
+                    fill: false
+                    }]
+                },
+                options: {
+                    legend: {display: true}
+                }
+            });
+            
+            new Chart("rotationGraph", {
+                type: "line",
+                data: {
+                    labels: msg.accelerometer[0],
+                    datasets: [{
+                    data: msg.accelerometer[1],
+                    borderColor: "red",
+                    fill: false
+                    },{
+                    data: msg.accelerometer[2],
+                    borderColor: "green",
+                    fill: false
+                    },{
+                    data: msg.accelerometer[3],
+                    borderColor: "blue",
+                    fill: false
+                    }]
+                },
+                options: {
+                    legend: {display: true}
+                }
             });
             
             var barometricPressureButton = document.getElementById('barometricPressureButton');
