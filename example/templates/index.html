@@ -139,6 +139,10 @@
             var cameraImage = document.getElementById('cameraImage');
 
             takePictureButton.addEventListener('click', function() {
+                socket.emit('request_image')
+            });
+
+            socket.on('new_image', function(msg) {
                 cameraImage.src = 'data:image/jpeg;base64,' + msg.image_data;
             });
         });
