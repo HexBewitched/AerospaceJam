@@ -55,7 +55,7 @@ def background_thread(queue):
         gyroData = mpu.get_gyro_data()
         heightDictionary["" + deltaTime] = pressureToHeight(barometricPressure)
         
-        dataDictionary["position"] = processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData)
+        dataDictionary["position"] = processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData45)
 
         try:
             request = queue.get(False) #false makes it not stop if the queue is empty
