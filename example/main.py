@@ -5,6 +5,7 @@ from bmp180 import BMP180
 from mpu6050 import mpu6050
 from queue import Queue
 from datetime import time
+from tfluna import TFLuna
 # This module lets us pick random numbers, you can remove it later.
 import random
 
@@ -15,6 +16,9 @@ socketio = SocketIO(app)
 #sensor and other objects are defined here
 bmp = BMP180()
 mpu = mpu6050(I2C_ADDRESS_FOR_MPU)
+tfluna = TFLuna()
+tfluna.open()
+tfluna.set_samp_rate(5)
 
 #variables to handle button requests
 queue = Queue()
@@ -53,9 +57,11 @@ def background_thread(queue):
         barometricPressure = bmp.get_pressure()
         accelerometerData = mpu.get_accel_data()
         gyroData = mpu.get_gyro_data()
+        lidarDistance, lidarStrength, lidarTemp = tfluna.read()
         heightDictionary["" + deltaTime] = pressureToHeight(barometricPressure)
         
         dataDictionary["position"] = processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData45)
+        processLidarData(dataDictionary, deltaTime, lidarDistance, gyroData)
 
         try:
             request = queue.get(False) #false makes it not stop if the queue is empty
@@ -94,8 +100,10 @@ def requestBarometricPressure():
 def airPressureToHeight(pressure):
     return 44330 * ( 1 - math.pow((pressure / PRESSURE_AT_SEA_LEVEL), 0.1903))
 
-def processLidarData(dataDictionary, deltaTime, lidarData, gyroData):
-    dataDictionary["lidar"]
+def processLidarData(dataDictionary, deltaTime, lidarDistance, gyroData):
+    theta = (1/2) * gyroData['y'] * deltaTime * deltaTime
+    dataDictionary["lidar"][0][len(dataDictionary["lidar"][0])] = theta
+    dataDictionary["lidar"][1][len(dataDictionary["lidar"][1])] = round(lidarDistance * 100.0, 2) #in centimeters
 
 def processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData):
     dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][0])] = deltaTime
