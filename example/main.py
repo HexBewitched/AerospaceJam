@@ -41,18 +41,21 @@ heightDictionary = { }
 dataDictionary["accelerometer"] = ({}, {}, {}, {}, {}, {}, {})
 dataDictionary["lidar"] = {}
 
-#specific variables to handle drone position
+#specific variables to handle drone position and time
 x = 0
 y = 0
 z = 0
 yaw = 0 #x axis
 pitch = 0 #y axis
 roll = 0 #z axis
+timeSinceLastFrame = 0
+previousTime = START_TIME
 
 #constants
 START_TIME = time.time()
 I2C_ADDRESS_FOR_MPU = 0x68
 PRESSURE_AT_SEA_LEVEL = 1001.6 #TODO: check local airport report for this value day of
+CAMERA_HERTZ_THRESHOLD = 1/15 #the minimum elapsed time before getting another frame from the camera. This is a higher fps to account for imperfect summation of deltaTime
 
 # When someone requests the root page from our web server, we return 'index.html'.
 @app.route('/')
@@ -65,7 +68,8 @@ def background_thread(queue):
     while True:
         # We sleep here for a single second, but this can be increased or decreased depending on how quickly you want data to be pushed to clients.
         socketio.sleep(1)
-        deltaTime = time.time() - START_TIME
+        currentTime = time.time()
+        deltaTime = currentTime - previousTime
         barometricPressure = bmp.get_pressure()
         accelerometerData = mpu.get_accel_data()
         gyroData = mpu.get_gyro_data()
@@ -73,6 +77,12 @@ def background_thread(queue):
         heightDictionary["" + deltaTime] = pressureToHeight(barometricPressure)
         
         dataDictionary["position"] = processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData45)
+
+        timeSinceLastFrame += deltaTime
+
+        if timeSinceLastFrame >= CAMERA_HERTZ_THRESHOLD:
+            timeSinceLastFrame = 0
+            handle_image_request()
 
         try:
             request = queue.get(False) #false makes it not stop if the queue is empty
@@ -101,6 +111,7 @@ def background_thread(queue):
             dataDictionary #dictionary of data to send    
         )
         # To add a your first new sensor, try giving https://docs.aerospacejam.org/getting-started/first-sensor a read!
+        previousTime = currentTime
 
 # This function runs when someone connects to the server - and all we do is start the background thread to update the data.
 @socketio.on('connect')
@@ -108,7 +119,6 @@ def handle_connect():
     print('Client connected')
     socketio.start_background_task(target=background_thread, queue=queue)
 
-@socketio.on('request_image')
 def handle_image_request():
     stream = io.BytesIO()
     cam.capture_file(stream, format='jpeg')

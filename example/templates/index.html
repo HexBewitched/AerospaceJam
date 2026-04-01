@@ -26,8 +26,6 @@
     <canvas id="map" style="width:100%;max-width:700px;"></canvas>
 
     <h2>Camera</h2>
-    <button id="takePictureButton">Take Picture</button>
-    <br>
     <img id="cameraImage" src="" alt="Live from Pi!" style="width: 640px; height: 480px; border: 1px solid black;">
     <script>
         // This function wrapper (addEventListener) makes the inner contents run only when the DOM (Document Object Model) content is loaded.
@@ -137,10 +135,6 @@
 
             var takePictureButton = document.getElementById('takePictureButton');
             var cameraImage = document.getElementById('cameraImage');
-
-            takePictureButton.addEventListener('click', function() {
-                socket.emit('request_image')
-            });
 
             socket.on('new_image', function(msg) {
                 cameraImage.src = 'data:image/jpeg;base64,' + msg.image_data;
