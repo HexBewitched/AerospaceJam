@@ -94,14 +94,17 @@ def requestBarometricPressure():
 def airPressureToHeight(pressure):
     return 44330 * ( 1 - math.pow((pressure / PRESSURE_AT_SEA_LEVEL), 0.1903))
 
+def processLidarData(dataDictionary, deltaTime, lidarData, gyroData):
+    dataDictionary["lidar"]
+
 def processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData):
     dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][0])] = deltaTime
-    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][1])] = accelerometerData['x']
-    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][2])] = accelerometerData['y']
-    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][3])] = accelerometerData['z']
-    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][4])] = gyroData['x']
-    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][5])] = gyroData['y']
-    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][6])] = gyroData['z']
+    dataDictionary["accelerometer"][1][len(dataDictionary["accelerometer"][1])] = accelerometerData['x']
+    dataDictionary["accelerometer"][2][len(dataDictionary["accelerometer"][2])] = accelerometerData['y']
+    dataDictionary["accelerometer"][3][len(dataDictionary["accelerometer"][3])] = accelerometerData['z']
+    dataDictionary["accelerometer"][4][len(dataDictionary["accelerometer"][4])] = gyroData['x']
+    dataDictionary["accelerometer"][5][len(dataDictionary["accelerometer"][5])] = gyroData['y']
+    dataDictionary["accelerometer"][6][len(dataDictionary["accelerometer"][6])] = gyroData['z']
     x += (1/2) * accelerometerData['x'] * deltaTime * deltaTime
     y += (1/2) * accelerometerData['y'] * deltaTime * deltaTime
     z += (1/2) * accelerometerData['z'] * deltaTime * deltaTime
