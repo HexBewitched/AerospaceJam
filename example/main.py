@@ -102,8 +102,12 @@ def airPressureToHeight(pressure):
 
 def processLidarData(dataDictionary, deltaTime, lidarDistance, gyroData):
     theta = (1/2) * gyroData['y'] * deltaTime * deltaTime
-    dataDictionary["lidar"][0][len(dataDictionary["lidar"][0])] = theta
-    dataDictionary["lidar"][1][len(dataDictionary["lidar"][1])] = round(lidarDistance * 100.0, 2) #in centimeters
+    radius = round(lidarDistance * 100.0, 2) #in centimeters
+    dataDictionary["lidar"][0][len(dataDictionary["lidar"][0])] = radius * Math.cos(toRadians(theta)) #x
+    dataDictionary["lidar"][1][len(dataDictionary["lidar"][1])] = radius * Math.cos(toRadians(theta)) #Y
+
+def toRadians(degrees):
+    reuturn degrees * (Math.PI / 18)
 
 def processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData):
     dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][0])] = deltaTime
