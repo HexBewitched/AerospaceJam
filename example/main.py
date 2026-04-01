@@ -28,6 +28,7 @@ barometricPressureRequest = False
 dataDictionary = { }
 heightDictionary = { }
 dataDictionary["accelerometer"] = ({}, {}, {}, {}, {}, {}, {})
+dataDictionary["lidar"] = {}
 
 #specific variables to handle drone position
 x = 0
@@ -103,11 +104,10 @@ def airPressureToHeight(pressure):
 def processLidarData(dataDictionary, deltaTime, lidarDistance, gyroData):
     theta = (1/2) * gyroData['y'] * deltaTime * deltaTime
     radius = round(lidarDistance * 100.0, 2) #in centimeters
-    dataDictionary["lidar"][0][len(dataDictionary["lidar"][0])] = radius * Math.cos(toRadians(theta)) #x
-    dataDictionary["lidar"][1][len(dataDictionary["lidar"][1])] = radius * Math.cos(toRadians(theta)) #Y
-
+    dataDictionary["lidar"][len(dataDictionary["lidar"])] = (radius * Math.cos(toRadians(theta)), radius * Math.cos(toRadians(theta))) #(x, y) pair
+    
 def toRadians(degrees):
-    reuturn degrees * (Math.PI / 18)
+    reuturn degrees * (Math.PI / 180)
 
 def processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData):
     dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][0])] = deltaTime

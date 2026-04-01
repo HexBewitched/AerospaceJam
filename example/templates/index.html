@@ -20,6 +20,8 @@
     <canvas id="positionGraph" style="width:100%;max-width:700px;"></canvas>
     <canvas id="rotationGraph" style="width:100%;max-width:700px;"></canvas>
     <p><b>(x, y, z, yaw, pitch, roll): </b> <span id="position">Loading...</span></p>
+    <p>2D map</p>
+    <canvas id="map" style="width:100%;max-width:700px;"></canvas>
     <script>
         // This function wrapper (addEventListener) makes the inner contents run only when the DOM (Document Object Model) content is loaded.
         // In simpler terms, this runs once the page has finished loading.
@@ -50,52 +52,63 @@
                         }]
                     }
                 });
-            });
 
-            new Chart("positionGraph", {
-                type: "line",
-                data: {
-                    labels: msg.accelerometer[0],
-                    datasets: [{
-                    data: msg.accelerometer[4],
-                    borderColor: "red",
-                    fill: false
-                    },{
-                    data: msg.accelerometer[5],
-                    borderColor: "green",
-                    fill: false
-                    },{
-                    data: msg.accelerometer[6],
-                    borderColor: "blue",
-                    fill: false
-                    }]
-                },
-                options: {
-                    legend: {display: true}
-                }
-            });
-            
-            new Chart("rotationGraph", {
-                type: "line",
-                data: {
-                    labels: msg.accelerometer[0],
-                    datasets: [{
-                    data: msg.accelerometer[1],
-                    borderColor: "red",
-                    fill: false
-                    },{
-                    data: msg.accelerometer[2],
-                    borderColor: "green",
-                    fill: false
-                    },{
-                    data: msg.accelerometer[3],
-                    borderColor: "blue",
-                    fill: false
-                    }]
-                },
-                options: {
-                    legend: {display: true}
-                }
+                new Chart("positionGraph", {
+                    type: "line",
+                    data: {
+                        labels: msg.accelerometer[0],
+                        datasets: [{
+                        data: msg.accelerometer[4],
+                        borderColor: "red",
+                        fill: false
+                        },{
+                        data: msg.accelerometer[5],
+                        borderColor: "green",
+                        fill: false
+                        },{
+                        data: msg.accelerometer[6],
+                        borderColor: "blue",
+                        fill: false
+                        }]
+                    },
+                    options: {
+                        legend: {display: true}
+                    }
+                });
+                
+                new Chart("rotationGraph", {
+                    type: "line",
+                    data: {
+                        labels: msg.accelerometer[0],
+                        datasets: [{
+                        data: msg.accelerometer[1],
+                        borderColor: "red",
+                        fill: false
+                        },{
+                        data: msg.accelerometer[2],
+                        borderColor: "green",
+                        fill: false
+                        },{
+                        data: msg.accelerometer[3],
+                        borderColor: "blue",
+                        fill: false
+                        }]
+                    },
+                    options: {
+                        legend: {display: true}
+                    }
+                });
+
+                new Chart("map", {
+                    type: "scatter",
+                    data: {
+                        datasets: [{
+                        pointRadius: 4,
+                        pointBackgroundColor: "rgba(255, 255, 255, 1)",
+                        data: msg.lidar
+                        }]
+                    }
+                });
             });
             
             var barometricPressureButton = document.getElementById('barometricPressureButton');
