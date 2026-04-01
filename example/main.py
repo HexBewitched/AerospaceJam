@@ -2,6 +2,7 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from bmp180 import BMP180
+from mpu6050 import mpu6050
 from queue import Queue
 from datetime import time
 # This module lets us pick random numbers, you can remove it later.
@@ -12,7 +13,8 @@ app = Flask(__name__)
 socketio = SocketIO(app)
 
 #sensor and other objects are defined here
-#bmp = BMP180() #TODO: uncomment when I have the drone
+bmp = BMP180()
+mpu = mpu6050(I2C_ADDRESS_FOR_MPU)
 
 #variables to handle button requests
 queue = Queue()
@@ -21,9 +23,19 @@ barometricPressureRequest = False
 #the dictionary for the data to be sent to the app
 dataDictionary = { }
 heightDictionary = { }
+dataDictionary["accelerometer"] = ({}, {}, {}, {}, {}, {}, {})
+
+#specific variables to handle drone position
+x = 0
+y = 0
+z = 0
+yaw = 0 #x axis
+pitch = 0 #y axis
+roll = 0 #z axis
 
 #constants
 START_TIME = time.time()
+I2C_ADDRESS_FOR_MPU = 0x68
 PRESSURE_AT_SEA_LEVEL = 1001.6 #TODO: check local airport report for this value day of
 
 # When someone requests the root page from our web server, we return 'index.html'.
@@ -37,9 +49,14 @@ def background_thread(queue):
     while True:
         # We sleep here for a single second, but this can be increased or decreased depending on how quickly you want data to be pushed to clients.
         socketio.sleep(1)
-        elapsedTime = time.time() - START_TIME
-        barometricPressure = random.randint(10,1000) #bmp.get_pressure() #TODO: uncomment when I have the drone
-        heightDictionary["" + elapsedTime] = pressureToHeight(barometricPressure)
+        deltaTime = time.time() - START_TIME
+        barometricPressure = bmp.get_pressure()
+        accelerometerData = mpu.get_accel_data()
+        gyroData = mpu.get_gyro_data()
+        heightDictionary["" + deltaTime] = pressureToHeight(barometricPressure)
+        
+        dataDictionary["position"] = processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData)
+
         try:
             request = queue.get(False) #false makes it not stop if the queue is empty
             match request[0]:
@@ -76,6 +93,22 @@ def requestBarometricPressure():
 
 def airPressureToHeight(pressure):
     return 44330 * ( 1 - math.pow((pressure / PRESSURE_AT_SEA_LEVEL), 0.1903))
+
+def processPositionData(dataDictionary, deltaTime, accelerometerData, gyroData):
+    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][0])] = deltaTime
+    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][1])] = accelerometerData['x']
+    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][2])] = accelerometerData['y']
+    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][3])] = accelerometerData['z']
+    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][4])] = gyroData['x']
+    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][5])] = gyroData['y']
+    dataDictionary["accelerometer"][0][len(dataDictionary["accelerometer"][6])] = gyroData['z']
+    x += (1/2) * accelerometerData['x'] * deltaTime * deltaTime
+    y += (1/2) * accelerometerData['y'] * deltaTime * deltaTime
+    z += (1/2) * accelerometerData['z'] * deltaTime * deltaTime
+    yaw += (1/2) * gyroData['x'] * deltaTime * deltaTime
+    pitch += (1/2) * gyroData['y'] * deltaTime * deltaTime
+    roll += (1/2) * gyroData['z'] * deltaTime * deltaTime
+    return (x, y, z, yaw, pitch, roll)
 
 # This function is called
 def main():
