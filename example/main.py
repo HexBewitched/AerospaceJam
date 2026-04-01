@@ -6,6 +6,9 @@ from mpu6050 import mpu6050
 from queue import Queue
 from datetime import time
 from tfluna import TFLuna
+from picamera2 import Picamera2
+import io
+import base64
 # This module lets us pick random numbers, you can remove it later.
 import random
 
@@ -17,8 +20,15 @@ socketio = SocketIO(app)
 bmp = BMP180()
 mpu = mpu6050(I2C_ADDRESS_FOR_MPU)
 tfluna = TFLuna()
+camera = Picamera2()
+
+#sensor setup
 tfluna.open()
 tfluna.set_samp_rate(5)
+
+camera_config = camera.create_preview_configuration(main={"size": (640, 480)})
+camera.configure(camera_config)
+camera.start()
 
 #variables to handle button requests
 queue = Queue()
@@ -97,6 +107,17 @@ def background_thread(queue):
 def handle_connect():
     print('Client connected')
     socketio.start_background_task(target=background_thread, queue=queue)
+
+@socketio.on('request_image')
+def handle_image_request():
+    stream = io.BytesIO()
+    cam.capture_file(stream, format='jpeg')
+
+    stream.seek(0)
+
+    b64_image = base64.b64encode(stream.read()).decomde('utf-8')
+
+    socketio.emit('new_image', {'image_data': b64_image})
 
 @socketio.on('drawMap')
 def collectMapData():

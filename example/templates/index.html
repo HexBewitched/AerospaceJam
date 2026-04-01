@@ -20,9 +20,15 @@
     <canvas id="positionGraph" style="width:100%;max-width:700px;"></canvas>
     <canvas id="rotationGraph" style="width:100%;max-width:700px;"></canvas>
     <p><b>(x, y, z, yaw, pitch, roll): </b> <span id="position">Loading...</span></p>
+
     <p>2D map</p>
     <button id="drawMap">Collect Map Data</button>
     <canvas id="map" style="width:100%;max-width:700px;"></canvas>
+
+    <h2>Camera</h2>
+    <button id="takePictureButton">Take Picture</button>
+    <br>
+    <img id="cameraImage" src="" alt="Live from Pi!" style="width: 640px; height: 480px; border: 1px solid black;">
     <script>
         // This function wrapper (addEventListener) makes the inner contents run only when the DOM (Document Object Model) content is loaded.
         // In simpler terms, this runs once the page has finished loading.
@@ -127,6 +133,13 @@
                     mapButton.textContent = "Stop Collecting Map Data"
                 else
                     mapButton.textContent = "Collect Map Data"
+            });
+
+            var takePictureButton = document.getElementById('takePictureButton');
+            var cameraImage = document.getElementById('cameraImage');
+
+            takePictureButton.addEventListener('click', function() {
+                cameraImage.src = 'data:image/jpeg;base64,' + msg.image_data;
             });
         });
     </script>
