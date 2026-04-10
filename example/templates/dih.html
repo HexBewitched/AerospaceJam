@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Drone Dashboard</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { background:#050505; font-family: Inter, sans-serif; color:white; }
+
+/* GLASS */
+.glass {
+  background: rgba(255,255,255,0.07);
+  backdrop-filter: blur(7px);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* MUTED TEXT */
+.muted { color: rgba(255,255,255,0.45); }
+
+/* GOLD */
+.accent { color:#f4c96b; }
+
+.accent-bg {
+  background: rgba(244,201,107,0.08);
+  border: 1px solid rgba(244,201,107,0.35);
+}
+
+/* GLOW */
+.glow {
+  box-shadow: 0 0 30px rgba(244,201,107,0.35);
+}
+
+/* MAP */
+.map-bg {
+  background:
+    radial-gradient(circle at 40% 40%, rgba(244,201,107,0.06), transparent 60%),
+    linear-gradient(180deg, #0b0b0b 0%, #050505 100%);
+}
+
+.grid-lines {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* radar pulse */
+.pulse::before {
+  content:"";
+  position:absolute;
+  width:80px;height:80px;
+  border-radius:50%;
+  background:rgba(244,201,107,0.08);
+  animation:pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%{transform:scale(0.5);opacity:0.6;}
+  100%{transform:scale(2);opacity:0;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="flex h-screen">
+
+<!-- SIDEBAR -->
+	<div class="w-20 flex flex-col items-center py-6 border-r border-white/5">
+		<div class="text-lg mb-10">RX</div>
+    	<div class="space-y-6 mt-10">
+      		<div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">🏠</div>
+      		<div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">🛰️</div>
+      		<div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">☀️</div>
+      		<div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">📡</div>
+      		<div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">💧</div>
+      		<div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">⚙️</div>
+    	</div>
+
+
+
+		<div class="mt-auto w-10 h-10 rounded-xl bg-white/5"></div>
+	</div>
+
+<!-- MAIN -->
+	<div class="flex-1 flex flex-col">
+
+	<!-- TOP -->
+		<div class="flex justify-between px-10 py-6">
+			<div class="text-lg">Marked sectors</div>
+
+			<div class="flex gap-10 text-sm muted">
+				<div>9 available</div>
+				<div class="text-white">Latest update <span class="muted ml-2">Now</span></div>
+			</div>
+		</div>
+
+		<div class="flex flex-1 gap-6 px-6 pb-6">
+
+	<!-- MAP -->
+	<div class="relative flex-1 rounded-3xl overflow-hidden relative map-bg grid-lines">
+
+<!-- floating info -->
+<div class="relative top-6 left-6 glass rounded-2xl p-5 w-72">
+<div class="muted text-sm">Sector name</div>
+<div class="mt-1">Agricultural sections</div>
+
+<div class="flex justify-between mt-4 text-sm muted">
+<div>
+<div>Latest update</div>
+<div class="text-white">Now</div>
+</div>
+<div>
+<div>Area</div>
+<div class="text-white">15 Ha</div>
+</div>
+</div>
+
+<button class="mt-4 w-full py-2 rounded-lg accent-bg glow">Update now</button>
+</div>
+
+<!-- floating info -->
+<div class="relative top-12 left-6 glass rounded-2xl p-5 w-52">
+<div class="muted text-sm">Sector name</div>
+<div class="mt-1">Agricultural sections</div>
+
+<div class="flex justify-between mt-4 text-sm muted">
+<div>
+<div>Latest update</div>
+<div class="text-white">Now</div>
+</div>
+<div>
+<div>Area</div>
+<div class="text-white">15 Ha</div>
+</div>
+</div>
+
+<button class="mt-4 w-full py-2 rounded-lg accent-bg glow">Update now</button>
+</div>
+
+<!-- radar drone
+<div id="drone" class="absolute pulse">
+<div class="w-4 h-4 bg-yellow-400 rounded-full absolute top-8 left-8"></div>
+</div> -->
+
+<!-- polygon -->
+<svg class="absolute inset-0">
+<polygon id="poly"
+fill="rgba(244,201,107,0.08)"
+stroke="#f4c96b"
+stroke-width="2"/>
+</svg>
+
+</div>
+<!-- end of map -->
+
+<!-- RIGHT -->
+<div class="relative right-5 max-w-sm flex flex-col gap-6">
+
+<!-- DRONE CARD -->
+<div class="glass p-5 rounded-2xl">
+<div class="flex justify-between">
+<div>
+<div class="muted text-sm">Drone settings</div>
+<div>RX_0093#57</div>
+</div>
+<div class="muted text-sm">Signal<br>Medium</div>
+</div>
+
+<div class="flex justify-between mt-4 text-sm">
+<div>
+<div class="muted">Flight speed</div>
+<div>43 km/h</div>
+</div>
+<div>
+<div class="muted">Distance</div>
+<div>21 km</div>
+</div>
+</div>
+</div>
+
+<!-- MOISTURE -->
+<div class="glass p-5 rounded-2xl">
+<div class="flex justify-between mb-3">
+<div>Moisture</div>
+<div class="muted">•••</div>
+</div>
+
+<canvas id="moistureChart"></canvas>
+<div class="mt-2 text-sm">25%</div>
+</div>
+
+<!-- PH + TEMP -->
+<div class="flex gap-4">
+
+<div class="glass p-5 rounded-2xl flex-1">
+<div class="muted text-sm">pH</div>
+<div id="ph" class="text-4xl mt-2">--</div>
+</div>
+
+<div class="p-5 rounded-2xl flex-1 accent-bg glow">
+<div class="muted text-sm">Temperature</div>
+<div id="temp" class="text-4xl mt-2 accent">--</div>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script>
+
+// chart
+const moistureChart = new Chart(document.getElementById("moistureChart"), {
+type:"bar",
+data:{labels:[],datasets:[{data:[]}]},
+options:{plugins:{legend:{display:false}}}
+});
+
+// update UI
+function updateUI(msg){
+
+document.getElementById("ph").textContent = msg.ph;
+document.getElementById("temp").textContent = msg.temp + "°";
+
+// moisture
+moistureChart.data.labels = msg.moisture.map((_,i)=>i);
+moistureChart.data.datasets[0].data = msg.moisture;
+moistureChart.update();
+
+// move drone
+const drone = document.getElementById("drone");
+drone.style.left = msg.position[0] + "%";
+drone.style.top = msg.position[1] + "%";
+
+// polygon
+document.getElementById("poly")
+.setAttribute("points", msg.polygon);
+
+}
+
+// fake data
+function fake(){
+return {
+ph:(6+Math.random()).toFixed(1),
+temp:(20+Math.random()*5).toFixed(0),
+position:[Math.random()*80, Math.random()*80],
+moisture:Array.from({length:10},()=>Math.random()*100),
+polygon:"400,200 500,150 600,300 550,450 420,420"
+};
+}
+
+setInterval(()=>updateUI(fake()),1000);
+
+
+// ===== REAL SOCKET READY =====
+/*
+var socket = io.connect('http://' + document.domain + ':' + location.port);
+socket.on('update_data', msg => updateUI(msg));
+*/
+
+</script>
+
+</body>
+</html>
+

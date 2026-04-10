@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Aerospace Jam Example</title>
+    <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0"></script>
+</head>
+<body>
+    <h1>Aerospace Jam Example</h1>
+
+    <p><b>Random number chosen by the Pi:</b> <span id="randomNumber">Loading...</span></p>
+
+    <p><b>Barometric Pressure:</b></p>
+    <canvas id="barometricPressure" style="width:100%;max-width:700px;"></canvas>
+    <button id="barometricPressureButton">Request Barometric Pressure</button>
+
+    <p>Position and rotation graph:</p>
+    <canvas id="positionGraph" style="width:100%;max-width:700px;"></canvas>
+    <canvas id="rotationGraph" style="width:100%;max-width:700px;"></canvas>
+    <p><b>(x, y, z, yaw, pitch, roll):</b> <span id="position">Loading...</span></p>
+
+    <p>2D map</p>
+    <button id="drawMap">Collect Map Data</button>
+    <canvas id="map" style="width:100%;max-width:700px;"></canvas>
+
+    <h2>Camera</h2>
+    <img id="cameraImage" src="" alt="Live from Pi!" style="width: 640px; height: 480px; border: 1px solid black;">
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            let mapIsActive = false;
+
+            const randomNumberSpan = document.getElementById("randomNumber");
+            const positionSpan = document.getElementById("position");
+            const barometricPressureButton = document.getElementById("barometricPressureButton");
+            const mapButton = document.getElementById("drawMap");
+            const cameraImage = document.getElementById("cameraImage");
+
+            const barometricCtx = document.getElementById("barometricPressure").getContext("2d");
+            const positionCtx = document.getElementById("positionGraph").getContext("2d");
+            const rotationCtx = document.getElementById("rotationGraph").getContext("2d");
+            const mapCtx = document.getElementById("map").getContext("2d");
+
+            const barometricChart = new Chart(barometricCtx, {
+                type: "line",
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: "Height",
+                        backgroundColor: "rgba(0,0,255,0.2)",
+                        borderColor: "rgba(0,0,255,1)",
+                        data: [],
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    plugins: {
+                        legend: { display: true }
+                    }
+                }
+            });
+
+            const positionChart = new Chart(positionCtx, {
+                type: "line",
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: "x",
+                            data: [],
+                            borderColor: "red",
+                            fill: false
+                        },
+                        {
+                            label: "y",
+                            data: [],
+                            borderColor: "green",
+                            fill: false
+                        },
+                        {
+                            label: "z",
+                            data: [],
+                            borderColor: "blue",
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    plugins: {
+                        legend: { display: true }
+                    }
+                }
+            });
+
+            const rotationChart = new Chart(rotationCtx, {
+                type: "line",
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: "yaw",
+                            data: [],
+                            borderColor: "red",
+                            fill: false
+                        },
+                        {
+                            label: "pitch",
+                            data: [],
+                            borderColor: "green",
+                            fill: false
+                        },
+                        {
+                            label: "roll",
+                            data: [],
+                            borderColor: "blue",
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    plugins: {
+                        legend: { display: true }
+                    }
+                }
+            });
+
+            const mapChart = new Chart(mapCtx, {
+                type: "scatter",
+                data: {
+                    datasets: [{
+                        label: "Lidar Points",
+                        pointRadius: 4,
+                        pointBackgroundColor: "rgba(255,255,255,1)",
+                        borderColor: "rgba(255,255,255,1)",
+                        data: []
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    scales: {
+                        x: {
+                            type: "linear",
+                            position: "bottom"
+                        },
+                        y: {
+                            type: "linear"
+                        }
+                    }
+                }
+            });
+
+            socket.on("update_data", function (msg) {
+                if (msg.randomNumber !== undefined) {
+                    randomNumberSpan.textContent = msg.randomNumber;
+                }
+
+                if (msg.position && msg.position.length >= 6) {
+                    const positionData =
+                        "(" + msg.position[0] + ", " +
+                        msg.position[1] + ", " +
+                        msg.position[2] + ", " +
+                        msg.position[3] + ", " +
+                        msg.position[4] + ", " +
+                        msg.position[5] + ")";
+                    positionSpan.textContent = positionData;
+                }
+
+                if (msg.accelerometer && msg.accelerometer.length >= 7) {
+                    positionChart.data.labels = Object.values(msg.accelerometer[0]);
+                    positionChart.data.datasets[0].data = Object.values(msg.accelerometer[1]);
+                    positionChart.data.datasets[1].data = Object.values(msg.accelerometer[2]);
+                    positionChart.data.datasets[2].data = Object.values(msg.accelerometer[3]);
+                    positionChart.update();
+
+                    rotationChart.data.labels = Object.values(msg.accelerometer[0]);
+                    rotationChart.data.datasets[0].data = Object.values(msg.accelerometer[4]);
+                    rotationChart.data.datasets[1].data = Object.values(msg.accelerometer[5]);
+                    rotationChart.data.datasets[2].data = Object.values(msg.accelerometer[6]);
+                    rotationChart.update();
+                }
+
+                if (msg.barometricPressure && Object.keys(msg.barometricPressure).length > 0) {
+                    barometricChart.data.labels = Object.keys(msg.barometricPressure);
+                    barometricChart.data.datasets[0].data = Object.values(msg.barometricPressure);
+                    barometricChart.update();
+                }
+
+                if (msg.lidar && Object.keys(msg.lidar).length > 0) {
+                    const lidarPoints = Object.values(msg.lidar).map(function (pair) {
+                        return {
+                            x: pair[0],
+                            y: pair[1]
+                        };
+                    });
+
+                    mapChart.data.datasets[0].data = lidarPoints;
+                    mapChart.update();
+                }
+            });
+
+            socket.on("new_image", function (msg) {
+                cameraImage.src = "data:image/jpeg;base64," + msg.image_data;
+            });
+
+            barometricPressureButton.addEventListener("click", function () {
+                socket.emit("requestBarometricPressure");
+            });
+
+            mapButton.addEventListener("click", function () {
+                socket.emit("drawMap");
+                mapIsActive = !mapIsActive;
+
+                if (mapIsActive) {
+                    mapButton.textContent = "Stop Collecting Map Data";
+                } else {
+                    mapButton.textContent = "Collect Map Data";
+                }
+            });
+        });
+    </script>
+</body>
+</html>
